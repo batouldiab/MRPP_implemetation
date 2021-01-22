@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <script language="javascript" type="text/javascript" src="libraries/p5.js"></script>
+  <script language="javascript" src="libraries/p5.dom.js"></script>
+  <script language="javascript" type="text/javascript" src="dna.js"></script>
+  <script>
+  
+	var tryy =0;
+  	var allgrids=[];
+	var obstacles=[];
+	 // Best path overall
+	var recordDistance = Infinity;
+	var bestEver;
+	
+	// Population of possible orders
+	var population = [];
+	
+	//var popTotal = window.prompt("Enter population number: ");
+	var popTotal = 20;
+
+  	var dimentions = 0;
+	while (dimentions<3 || dimentions>20){
+		var dimentions = window.prompt("Enter number of grids dimentions (between 3 & 20): ");
+	}
+	
+	var n=0;
+	var num=[];
+	for (i=0;i<dimentions*dimentions;i++){
+		n++
+		num.push(n);
+	}
+	//console.log(num)
+	//var startgrid=new p5.Vector(0,0);
+	//var targetgrid=new p5.Vector(dimentions-1, dimentions-1);
+	/*
+	var matrix=[];
+	var n=-1;
+	for (i=0;i<dimentions;i++){
+		for (j=0;j<dimentions;j++){
+			n++;
+			matrix[i][j]=num[n];
+			var v =createVector(i, j);	
+			allgrids.push(v);	
+		}			
+	}
+	*/
+	var colors= [];
+	var newcolors=[];
+	var newcolors2=[];
+	var j=0;
+	var i=0;
+		
+	function setup(){
+		createCanvas(dimentions*30*2+100,dimentions*30);
+		startgrid =createVector(0, 0);
+		targetgrid =createVector(dimentions-1, dimentions-1);
+		var s= startgrid.x + startgrid.y;
+		var t= targetgrid.x+targetgrid.y;
+
+		for(i=0;i<dimentions;i++){
+			colors[i]=[];
+			newcolors[i]=[]
+			newcolors2[i]=[]
+			for(j=0;j<dimentions;j++){
+				colors[i][j]=255;
+				newcolors[i][j]=255;
+				newcolors2[i][j]=255;
+			}
+		}
+		
+		colors[0][0]="#ff0000";
+		colors[dimentions-1][dimentions-1]="#ff0000";
+		
+		var o= floor(random(1,dimentions-2)); //number of obstacles
+		for(i=0;i<o;i++){ //choose the obstacles grids
+			var obstaclex= floor(random(0,dimentions-1));
+			var obstacley= floor(random(0,dimentions-1))
+			var v =createVector(obstaclex, obstacley);	
+			if(obstaclex+obstacley==t || obstaclex+obstacley==s){
+				i--;
+				continue;
+			}
+			obstacles.push(v);
+			colors[obstaclex][obstacley]="#000000";
+		}
+		console.log("setup")
+		 //Create population
+		 for (i = 0; i < popTotal; i++) {
+		
+		   population[i] = new DNA(allgrids.length); 
+		   
+		 }
+		 
+	}
+	
+	function draw(){
+	//setup();
+		background(200);
+		
+		  // Each round let's find the best and worst
+		  var minDist = Infinity;
+		  var maxDist = 0;
+		  // Search for the best this round and overall
+		  var bestNow; 
+		
+
+		  
+		  
+		  for (var i = 0; i < population.length; i++) {
+		    var d = population[i].calcDistance();
+		    // Is this the best ever?
+		    if (d < recordDistance) {
+		      recordDistance = d;
+			  //console.log(recordDistance)
+		      bestEver = population[i];
+			  console.log(bestEver)
+		    } 
+		    // Is this the best this round?
+		    if (d < minDist) {
+		      minDist = d;
+		      bestNow = population[i];
+		    }
+		    // Is this the worst?
+		    if (d > maxDist) {
+		      maxDist = d;
+		    }
+		  }
+		  
+		//matrix colors for best now
+		var n=-1;
+		var s=0;
+		//determine colors of grids
+  		for (i=0;i<dimentions;i++){
+			newcolors2[i]=[]
+			for (j=0;j<dimentions;j++){
+				newcolors2[i][j]="#ffffff";
+				for (var k=0;k<bestNow.order.length;k++){
+					if (bestNow.order[k].x==i && bestNow.order[k].y==j){//if this dna contains this grid color green
+						newcolors2[i][j]="#00ff00";
+					}
+				}
+			}
+		}
+
+		//color the start and target red
+		newcolors2[startgrid.x][startgrid.y]="#ff0000";
+		newcolors2[targetgrid.x][targetgrid.y]="#ff0000";
+		
+		//color the obstacles black
+		for (i=0;i<dimentions;i++){
+			for (j=0;j<dimentions;j++){
+				for (var k=0;k<obstacles.length;k++){
+					if (obstacles[k].x==i && obstacles[k].y==j){
+						newcolors2[i][j]="#000000"
+						
+					}
+				}
+			}	
+		}  
+		
+		//matrix colors for best ever
+		var n=-1;
+		var s=0;
+		//determine colors of grids
+  		for (i=0;i<dimentions;i++){
+			newcolors[i]=[]
+			for (j=0;j<dimentions;j++){
+				newcolors[i][j]="#ffffff";
+				for (var k=0;k<bestEver.order.length;k++){
+					if (bestEver.order[k].x==i && bestEver.order[k].y==j){//if this dna contains this grid color green
+						newcolors[i][j]="#00ff00";
+					}
+				}
+			}
+		}
+
+		//color the start and target red
+		newcolors[startgrid.x][startgrid.y]="#ff0000";
+		newcolors[targetgrid.x][targetgrid.y]="#ff0000";
+		
+		//color the obstacles black
+		for (i=0;i<dimentions;i++){
+			for (j=0;j<dimentions;j++){
+				for (var k=0;k<obstacles.length;k++){
+					if (obstacles[k].x==i && obstacles[k].y==j){
+						newcolors[i][j]="#000000"
+						
+					}
+				}
+			}	
+		}
+		
+		//console.log(bestEver)
+		  // Show the best this round
+		bestNow.show2();
+	
+		  // Show the best ever!
+		translate(dimentions*30+100, 0);
+		bestEver.show();
+		//console.log(bestEver)
+		//console.log("show");
+		  
+		  // Map all the fitness values between 0 and 1
+		  var sum = 0;
+		  for (var i = 0; i < population.length; i++) {
+		    sum += population[i].mapFitness(minDist, maxDist);
+		  } 
+		 
+		  // Normalize them to a probability between 0 and 1
+		  for (var i = 0; i < population.length; i++) {
+		    population[i].normalizeFitness(sum);
+		  }
+		  
+		  
+		  // Selection
+		  // A new population
+		  var newPop = [];
+		  // Sam population size
+
+		  for (var i = 0; i < population.length; i++) {
+		    // Pick two
+			//console.log(population)
+		    var a = pickOne(population);
+		    var b = pickOne(population);
+		    // Crossover!
+			//console.log(a)
+			//console.log(b)
+		    var order = a.crossover(b);
+		    newPop[i] = new DNA(allgrids.length, order);
+		  }
+		  //console.log("newpop")
+		  //console.log(newPop.length)
+		  // New population!
+		  population = newPop;
+		
+		/*
+		n=-1;
+		var s=0;
+		for(i=0 ; i<dimentions ;i++){
+		
+			for(j=0 ; j<dimentions ;j++){
+				
+				var x=i*30;
+				var y=j*30;
+						
+				fill(colors[i][j]);
+				stroke(0);
+				rect(x,y,30,30);
+				
+				n++;
+				fill(0);
+				s=num[n];
+				text(s, x+15, y+15); // Text wraps within the square
+				textAlign(CENTER, CENTER);
+				
+			}
+		}
+		*/
+		
+		
+	}
+	
+	
+	// This is a new algorithm to select based on fitness probability!
+	// It only works if all the fitness values are normalized and add up to 1
+	function pickOne() {
+	  // Start at 0
+	  var index = 0;
+	
+	  // Pick a random number between 0 and 1
+	  var r = random(1);
+	  
+	  // Keep subtracting probabilities until you get less than zero
+	  // Higher probabilities will be more likely to be fixed since they will
+	  // subtract a larger number towards zero
+	  while (r > 0) {
+	    r -= population[index].fitness;
+	    // And move on to the next
+	    index += 1;
+		if(index>population.length){
+			index=1;
+		}
+	  }
+	  // Go back one
+	  index -= 1;
+	  //console.log(index)
+	  return population[index];
+	}
+  </script>
+</head>
+
+<body>
+</body>
+
+</html>
